@@ -46,8 +46,28 @@ class BoardSuite extends FlatSpec with ShouldMatchers {
     val board = Board(2, 2, Set())
     val state = State(board, None)
     intercept[IllegalArgumentException] {
-    	state.putShape(1, shape)
+      state.putShape(1, shape)
     }
+  }
+
+  "Method moveShape" should "not change board" in {
+    val shape = Shape(Set((0, 0), (1, 0), (1, 1)))
+    val board = Board(3, 2, Set((0, 1), (0, 2), (0, 3)))
+    val startState = State(board, Some((0, -1), shape))
+    val endState = startState.moveShape(Down)
+
+    val endBoard = Board(3, 2, Set((0, 1), (0, 2), (0, 3)))
+    endState should be(State(endBoard, Some((0, 0), shape)))
+  }
+
+  it should "change board" in {
+    val shape = Shape(Set((0, 0), (1, 0), (1, 1)))
+    val board = Board(3, 2, Set((0, 1), (0, 2), (0, 3)))
+    val startState = State(board, Some((0, 0), shape))
+    val endState = startState.moveShape(Down)
+
+    val endBoard = Board(3, 2, Set((0, 1), (0, 2), (0, 3), (0, 0), (1, 0), (1, 1)))
+    endState should be(State(endBoard, None))
   }
 
 }
