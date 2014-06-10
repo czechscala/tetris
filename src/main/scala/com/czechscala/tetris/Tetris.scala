@@ -1,21 +1,22 @@
 package com.czechscala.tetris
 
-import model._
-import akka.actor.{Props, ActorSystem, Actor}
-import scala.annotation.tailrec
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits._
+import akka.actor.{Actor, ActorSystem, Props}
+import com.czechscala.tetris.model._
 import com.czechscala.tetris.render.Swing
 
+import scala.annotation.tailrec
+import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.duration._
 
 object Tetris extends App {
 
   case object Tick
+
   case class Key(code: Int)
 
   class Engine extends Actor {
-    private val renderer = new Swing
-    private var state = State(Board(10, 20, Set()), None)
+    private val renderer = new Swing(20, 30, self)
+    private var state = State(Board(20, 30, Set()), None)
     private var ticks = 0
     private var delay = 2000
 
@@ -25,7 +26,7 @@ object Tetris extends App {
     }
 
     private def tick = context.system.scheduler.scheduleOnce(delay millis, self, Tick)
-	
+
     def receive = {
       case Tick =>
         renderer render state
@@ -37,12 +38,13 @@ object Tetris extends App {
     }
 
     def getTicks = ticks
+
     def getDelay = delay
   }
 
   val system = ActorSystem("tetris")
   val engine = system.actorOf(Props[Engine])
-  
+
   @tailrec
   def waitForKey: Unit = {
     val code = System.in.read
@@ -51,7 +53,7 @@ object Tetris extends App {
       waitForKey
     }
   }
-  
+
   waitForKey
   system.shutdown()
 }
