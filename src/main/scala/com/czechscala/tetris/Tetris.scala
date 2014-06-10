@@ -16,26 +16,30 @@ object Tetris extends App {
 
   class Engine extends Actor {
     private val renderer = new Swing(20, 30, self)
-    private var state = State(Board(20, 30, Set()), None)
+    private var state = State(Board(20, 30, Set()), None).putShape(0, ShapeGenerator.next)
     private var ticks = 0
     private var delay = 2000
 
-    override def preStart = {
-      renderer render state
-      tick
-    }
+    override def preStart = { render; tick }
 
     private def tick = context.system.scheduler.scheduleOnce(delay millis, self, Tick)
 
     def receive = {
       case Tick =>
-        renderer render state
+        render
         ticks += 1
         if (ticks % 100 == 0) delay = (delay * 0.9).toInt
         tick
 
-      case Key(code) => println("key pressed: " + code);
+      case key: KeyPress =>
+        key match {
+          case LeftArrow => state = state.moveShape(Left)
+          case RightArrow => state = state.moveShape(Right)
+        }
+        render
     }
+
+    private def render = renderer render state
 
     def getTicks = ticks
 
