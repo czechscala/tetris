@@ -45,15 +45,20 @@ package object model {
       require(this.shape.isDefined)
       val Some(((x, y), shape)) = this.shape
 
-      val newX = direction match {
-        case Right => x + 1
-        case Left => x - 1
+      val (newX, newY) = direction match {
+        case Right => (x + 1, y)
+        case Left => (x - 1, y)
+        case Down => (x, y + 1)
       }
-      val shapeGrid = shape.grid map { case (gx, gy) => (gx + x + newX, gy + y) }
+      val shapeGrid = shape.grid map { case (gx, gy) => (gx + newX, gy + newY) }
       val isAdjacent = board.grid.intersect(shapeGrid).nonEmpty
 
-      if (isAdjacent || newX < 0 || newX + shape.width > board.width) this
-      else State(board, Some((newX, y), shape))
+      if (isAdjacent && direction == Down || (newY + shape.height > board.height)) {
+        val newBoard = board.copy(grid = board.grid ++ shape.grid.map { case (gx, gy) => (gx + x, gy + y) })
+        State(newBoard, None)
+      }
+      else if (isAdjacent || newX < 0 || newX + shape.width > board.width) this
+      else State(board, Some((newX, newY), shape))
     }
   }
 
