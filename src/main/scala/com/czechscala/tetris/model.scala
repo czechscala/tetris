@@ -1,6 +1,7 @@
 package com.czechscala.tetris
 
 package object model {
+
   type Grid = Set[(Int, Int)]
 
   case class Board(width: Int, height: Int, grid: Grid) {
@@ -8,7 +9,7 @@ package object model {
       grid forall { case (x, y) => x >= 0 && x < width && y >= 0 && y < height }
     }
   }
-  
+
   sealed trait Direction
 
   case object Down extends Direction
@@ -40,3 +41,14 @@ package object model {
   }
 }
 
+  sealed trait KeyPress
+
+  case object Left extends KeyPress
+
+  case object Right extends KeyPress
+
+  case object Down extends KeyPress
+
+  case object Space extends KeyPress
+
+}
