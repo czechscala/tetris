@@ -40,6 +40,21 @@ package object model {
       }
       State(board, Some(((x, 1 - shape.height), shape)))
     }
+
+    def moveShape(direction: Direction) = {
+      require(this.shape.isDefined)
+      val Some(((x, y), shape)) = this.shape
+
+      val newX = direction match {
+        case Right => x + 1
+        case Left => x - 1
+      }
+      val shapeGrid = shape.grid map { case (gx, gy) => (gx + x + newX, gy + y) }
+      val isAdjacent = board.grid.intersect(shapeGrid).nonEmpty
+
+      if (isAdjacent || newX < 0 || newX + shape.width > board.width) this
+      else State(board, Some((newX, y), shape))
+    }
   }
 
   sealed trait KeyPress
