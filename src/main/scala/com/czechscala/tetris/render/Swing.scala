@@ -5,7 +5,7 @@ import java.awt.{Color, Dimension, Graphics}
 import javax.swing.{JFrame, JPanel, SwingUtilities}
 
 import akka.actor.ActorRef
-import com.czechscala.tetris.model.{Down, Space, State}
+import com.czechscala.tetris.model._
 
 class Swing(keyListener: ActorRef) extends Renderer {
 
@@ -45,9 +45,11 @@ class Swing(keyListener: ActorRef) extends Renderer {
       super.paintComponent(g)
 
       clear(g)
+      drawGrid(currentState.board.grid, g)
 
-      currentState.board.grid.foreach { case (x, y) =>
-        drawRectangle(x, y, g)
+      currentState.shape match {
+        case Some(((offsetX, offsetY), shape)) => drawGrid(shape.grid, g, offsetX, offsetY)
+        case None => // ignore
       }
     }
 
@@ -61,6 +63,12 @@ class Swing(keyListener: ActorRef) extends Renderer {
       g.fillRect(x * RectSizePx, y * RectSizePx, RectSizePx, RectSizePx)
     }
 
+    private def drawGrid(grid: Grid, g: Graphics, offsetX: Int = 0, offsetY: Int = 0) = {
+      grid.foreach { case (x, y) =>
+        drawRectangle(offsetX + x, offsetY + y, g)
+      }
+    }
+
     override def getPreferredSize() = new Dimension(widthPx, heightPx)
 
     private def widthPx: Int = currentState.board.width * RectSizePx
@@ -70,9 +78,9 @@ class Swing(keyListener: ActorRef) extends Renderer {
 
   private object Keyboard extends KeyListener {
     override def keyPressed(e: KeyEvent): Unit = keyListener ! e.getExtendedKeyCode match {
-      case KeyEvent.VK_LEFT => Left
-      case KeyEvent.VK_RIGHT => Right
-      case KeyEvent.VK_DOWN => Down
+      case KeyEvent.VK_LEFT => LeftArrow
+      case KeyEvent.VK_RIGHT => RightArrow
+      case KeyEvent.VK_DOWN => DownArrow
       case KeyEvent.VK_SPACE => Space
       case _ => // ignore
     }
