@@ -7,26 +7,20 @@ import javax.swing.{JFrame, JPanel, SwingUtilities}
 import akka.actor.ActorRef
 import com.czechscala.tetris.model._
 
-class Swing(keyListener: ActorRef) extends Renderer {
+class Swing(width: Int, height: Int, keyListener: ActorRef) extends Renderer {
 
   private val frame = new JFrame("Tetris")
   private val canvas = new Canvas
-  private var canvasInitialized = false
 
   swing {
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
     frame.addKeyListener(Keyboard)
+    frame.add(canvas)
+    frame.pack()
+    frame.setVisible(true)
   }
 
   override def render(state: State): Unit = swing {
-    if (!canvasInitialized) {
-      frame.add(canvas)
-      frame.pack()
-      frame.setVisible(true)
-
-      canvasInitialized = true
-    }
-
     canvas.refresh(state)
   }
 
@@ -34,21 +28,25 @@ class Swing(keyListener: ActorRef) extends Renderer {
 
     private final val RectSizePx = 30
 
-    var currentState: State = _
+    var currentState: Option[State] = None
 
     def refresh(state: State): Unit = {
-      currentState = state
+      currentState = Some(state)
       this.repaint()
     }
 
     override def paintComponent(g: Graphics) = {
       super.paintComponent(g)
 
-      clear(g)
-      drawGrid(currentState.board.grid, g)
+      currentState match {
+        case Some(state) =>
+          clear(g)
+          drawGrid(state.board.grid, g)
 
-      currentState.shape match {
-        case Some(((offsetX, offsetY), shape)) => drawGrid(shape.grid, g, offsetX, offsetY)
+          state.shape match {
+            case Some(((offsetX, offsetY), shape)) => drawGrid(shape.grid, g, offsetX, offsetY)
+            case None => // ignore
+          }
         case None => // ignore
       }
     }
@@ -71,18 +69,25 @@ class Swing(keyListener: ActorRef) extends Renderer {
 
     override def getPreferredSize() = new Dimension(widthPx, heightPx)
 
-    private def widthPx: Int = currentState.board.width * RectSizePx
+    private def widthPx: Int = width * RectSizePx
 
-    private def heightPx: Int = currentState.board.height * RectSizePx
+    private def heightPx: Int = height * RectSizePx
   }
 
   private object Keyboard extends KeyListener {
-    override def keyPressed(e: KeyEvent): Unit = keyListener ! e.getExtendedKeyCode match {
-      case KeyEvent.VK_LEFT => LeftArrow
-      case KeyEvent.VK_RIGHT => RightArrow
-      case KeyEvent.VK_DOWN => DownArrow
-      case KeyEvent.VK_SPACE => Space
-      case _ => // ignore
+    override def keyPressed(e: KeyEvent): Unit = {
+      val keyPress = e.getExtendedKeyCode match {
+        case KeyEvent.VK_LEFT => Some(LeftArrow)
+        case KeyEvent.VK_RIGHT => Some(RightArrow)
+        case KeyEvent.VK_DOWN => Some(DownArrow)
+        case KeyEvent.VK_SPACE => Some(Space)
+        case _ => None
+      }
+
+      keyPress match {
+        case Some(ev) => keyListener ! ev
+        case None => // ignore
+      }
     }
 
     override def keyTyped(e: KeyEvent): Unit = ()
